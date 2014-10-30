@@ -30,15 +30,21 @@
 #  proc uboot_env: Convert u-boot variables in a string ready to be flashed
 #                  in the region reserved for environment variables
 ################################################################################
-set board_suffix [lindex $argv 3 ]
-set board_serial [lindex $argv 4 ]
+set board_suffix   [lindex $argv 3 ]
+set board_serial   [lindex $argv 4 ]
+set factory_serial [lindex $argv 5 ]
+set macAddr        [lindex $argv 6 ]
+set ipcfg          [lindex $argv 7 ]
 set board "sama5d31$board_suffix"
 
 puts " ===================== flash.tcl ========================="
 
-puts "board_suffix $board_suffix"
-puts "board_serial $board_serial"
-puts "board        $board       "
+puts "board_suffix   $board_suffix"
+puts "board_serial   $board_serial"
+puts "factory_serial $factory_serial"
+puts "macAddr        $macAddr"
+puts "ipcfg          $ipcfg"
+puts "board          $board"
 
 proc set_uboot_env {nameOfLstOfVar} {
     upvar $nameOfLstOfVar lstOfVar
@@ -150,7 +156,11 @@ lappend bootvars \
     "new_firmware=0" \
     "cmd_nr=0" \
     "ddram_test=0"
-set macAddr [macAddr_generate]
+
+if { $macAddr == "" } {
+    set macAddr [macAddr_generate]
+}
+
 lappend envvars \
 "cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 " \
 "cmd1=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=8 root=ubi0:rootfs lpj=1314816 quiet" \
@@ -159,8 +169,10 @@ lappend envvars \
 "dtbAddr0=$dtbAddr0" \
 "dtbAddr1=$dtbAddr1" \
 "macAddr=$macAddr" \
-"ip=10.120.13.170 255.255.255.0 10.120.13.254" \
-"serial=EB $board_serial"
+"ip=$ipcfg" \
+"serial=$board_serial" \
+"factory=$factory_serial" 
+
 puts $envvars
 
 puts "-I- === Initialize the NAND access ==="
