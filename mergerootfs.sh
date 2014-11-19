@@ -90,7 +90,7 @@ function mount_ubi () {
 function merge_fs () {
     local merge_dir="${1}"
     local target_dir="${2}"
-    cp -a "${merge_dir}/"* "${target_dir}/"
+    cp -a -f "${merge_dir}/"* "${target_dir}/"
     if [[ $? != 0 ]]; then
         err "failed to merge directory \"${merge_dir}\" to \"${target_dir}\""
         return 9
@@ -103,7 +103,7 @@ function create_ubi_image () {
     local UbiImage="${2}"
     local retcode=0
     local ubifs_file=$(mktemp ubifs.XXX)
-    mkfs.ubifs -F -d "${dir}" -e 0x1f000 -c 2048 -m 0x800 -x lzo -o "${ubifs_file}" || retcode=$?
+    mkfs.ubifs  -d "${dir}" -e 0x1f000 -c 2048 -m 0x800 -x lzo -o "${ubifs_file}" || retcode=$?
     if [[ ${retcode} == 0 ]]; then
         ubinize -o "${UbiImage}" -m 0x800 -p 0x20000 -s 2048 <( \
 	echo "[ubifs]"; \
@@ -113,7 +113,7 @@ function create_ubi_image () {
 	echo "vol_name=rootfs"; \
 	echo "vol_alignment=1"; \
 	echo "vol_flags=autoresize"; \
-	echo "image=${ubifs_file}"; ) >&2 || retcode=$?
+	echo "image=${ubifs_file}"; ) || retcode=$?
         if [[ ${retcode} == 0 ]];then
             # image fertig
             echo "image created ${UbiImage}" >&2
