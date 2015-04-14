@@ -26,16 +26,50 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
 
-################################################################################
-#  proc uboot_env: Convert u-boot variables in a string ready to be flashed
-#                  in the region reserved for environment variables
-################################################################################
 set board_suffix   [lindex $argv 3 ]
 set board_serial   [lindex $argv 4 ]
 set factory_serial [lindex $argv 5 ]
 set macAddr        [lindex $argv 6 ]
 set ipcfg          [lindex $argv 7 ]
-set board "sama5d31$board_suffix"
+
+## Find out sama5d3 variant to load the corresponding dtb file
+array set sama5d3_variant {
+   0x00444300 sama5d31
+   0x00414300 sama5d33
+   0x00414301 sama5d34
+   0x00584300 sama5d35
+   0x00004301 sama5d36
+}
+
+set chip_variant [format "0x%08x" [read_int 0xffffee44]]
+set variant_name "none"
+
+foreach {key value} [array get sama5d3_variant] {
+   if {$key == $chip_variant} {
+      set variant_name $value
+      break;
+   }
+}
+
+if {$variant_name == "none"} {
+   puts "-E- === Unknown sama5d3 variant: $chip_variant ==="
+   exit
+} else {
+   puts "-I- Chip variant is $variant_name"
+}
+if {$board_suffix == "none"} {
+   puts "-E- === Unknown $variant_name board ==="
+   exit
+} else {
+   puts "-I- Board variant is $board_suffix"
+}
+
+
+################################################################################
+#  proc uboot_env: Convert u-boot variables in a string ready to be flashed
+#                  in the region reserved for environment variables
+################################################################################
+set board "$variant_name$board_suffix"
 
 puts " ===================== flash.tcl ========================="
 
@@ -71,41 +105,11 @@ proc macAddr_generate {} {
 #               Update the environment variables
 ################################################################################
 
-## Find out sama5d3 variant to load the corresponding dtb file
-array set sama5d3_variant {
-   0x00444300 sama5d31
-   0x00414300 sama5d33
-   0x00414301 sama5d34
-   0x00584300 sama5d35
-}
-
-set chip_variant [format "0x%08x" [read_int 0xffffee44]]
-set variant_name "none"
-
-foreach {key value} [array get sama5d3_variant] {
-   if {$key == $chip_variant} {
-      set variant_name $value
-      break;
-   }
-}
-
-if {$variant_name == "none"} {
-   puts "-E- === Unknown sama5d3 variant: $chip_variant ==="
-   exit
-} else {
-   puts "-I- Chip variant is $variant_name"
-}
-if {$board_suffix == "none"} {
-   puts "-E- === Unknown $variant_name board ==="
-   exit
-} else {
-   puts "-I- Board variant is $board_suffix"
-}
-
 ## Files to load
 append bootstrapFile	$board "-boot.bin"
-set kernelFile		"uImage"
+set kernelFile		"uImage-3.6.9"
 append dtbFile 		$variant_name $board_suffix ".dtb"
+
 set rootfsFile		"rootfs.ubi"
 set userfsFile          "userfs.ubi"
 set bootvarsFile        "bootvars.bin"
@@ -161,8 +165,9 @@ if { $macAddr == "" } {
     set macAddr [macAddr_generate]
 }
 
+##"cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 _quiet" 
 lappend envvars \
-"cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 " \
+"cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),-(userfs) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 quiet" \
 "cmd1=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=8 root=ubi0:rootfs lpj=1314816 quiet" \
 "kernelAddr0=$kernelAddr0" \
 "kernelAddr1=$kernelAddr1" \
@@ -171,7 +176,8 @@ lappend envvars \
 "macAddr=$macAddr" \
 "ip=$ipcfg" \
 "serial=$board_serial" \
-"factory=$factory_serial" 
+"factory=$factory_serial" \
+"developer=1"
 
 puts $envvars
 
