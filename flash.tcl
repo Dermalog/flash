@@ -168,7 +168,7 @@ if { $macAddr == "" } {
 ##"cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 _quiet" 
 lappend envvars \
 "cmd0=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),-(userfs) rootfstype=ubifs ubi.mtd=5 root=ubi0:rootfs lpj=1314816 quiet" \
-"cmd1=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),11008k(userfs),-(reserved) rootfstype=ubifs ubi.mtd=8 root=ubi0:rootfs lpj=1314816 quiet" \
+"cmd1=mem=128M console=ttyS0,115200 mtdparts=atmel_nand:256k(bootstrap),256k(bootvar),256k(envvar),256k(dtb0),3M(kernel0),55M(rootfs0),256k(dtb1),3M(kernel1),55M(rootfs1),-(userfs) rootfstype=ubifs ubi.mtd=8 root=ubi0:rootfs lpj=1314816 quiet" \
 "kernelAddr0=$kernelAddr0" \
 "kernelAddr1=$kernelAddr1" \
 "dtbAddr0=$dtbAddr0" \
